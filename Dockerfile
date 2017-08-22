@@ -21,6 +21,10 @@ RUN chmod a+x /bin/wkhtmltopdf
 
 # ==========================================
 # nginx
+# pre nginx
+RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log
+# ==========================================
+
 # thanks to: https://github.com/nginxinc/docker-nginx/blob/14aa3b1b80341099afbf90eb0a9b9061b7145f18/mainline/alpine/Dockerfile
 ENV NGINX_VERSION 1.13.3
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
@@ -207,7 +211,6 @@ RUN set -ex; \
 
 RUN mkdir /data && chown redis:redis /data
 VOLUME /data
-WORKDIR /data
 
 # ==========================================
 # postgresql
@@ -233,24 +236,30 @@ ENV POSTGRES_PASSWORD ""
 # custom config
 ADD /etc /etc
 RUN mkdir -p /run/postgresql/ && chown postgres:postgres /run/postgresql/
-RUN mkdir -p /var/log/redis && mkdir -p /var/log/nginx && chmod a+rwx -R /var/log
+RUN mkdir -p /var/log/redis && chmod a+rwx -R /var/log/redis
+RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log/nginx
 RUN mkdir -p /var/cache/nginx && chmod 777 -R /var/cache/nginx
+RUN mkdir -p /var/run/redis && chmod 777 -R /var/run/redis
+RUN mkdir -p /var/lib/redis && chmod 777 -R /var/lib/redis
 
+ENV APP_ENDPOINT "http://127.0.0.1:3000"
 # ==========================================
 # finalize
 
 #nginx, ssl, postgresql, redis
 EXPOSE 80 443 5432 6379
+WORKDIR /app
 
 #STOPSIGNAL SIGTERM
 
-
-CMD ["redis-server", "/etc/redis/redis.conf"]
+#CMD redis-server /etc/redis/redis.conf && nginx
+#CMD ["redis-server", "/etc/redis/redis.conf"]
 #CMD ["su", "postgres", "postgres"]
-CMD ["nginx", "-g", "daemon off;"]
+#CMD ["nginx"]
+#CMD ["nginx", "-g", "daemon off;"]
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # /data - redis
-VOLUME ["/etc/nginx/conf.d", "/etc/nginx/certs", "/etc/nginx/dhparam", "/data", "/var/lib/postgresql/data"]
+VOLUME ["/etc/nginx/conf.d", "/etc/nginx/certs", "/etc/nginx/dhparam", "/data", "/var/lib/postgresql/data", "/app"]
 
 

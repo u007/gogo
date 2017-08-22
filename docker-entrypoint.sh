@@ -1,4 +1,8 @@
 #!/bin/sh
+
+nginx
+redis-server /etc/redis/redis.conf
+
 chown -R postgres "$PGDATA"
 
 if [ -z "$(ls -A "$PGDATA")" ]; then

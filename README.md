@@ -1,9 +1,9 @@
 
 Comes with:
 * redis
-* nginx-proxy
+* nginx-proxy (TODO)
 * wkhtml2pdf
-* postgresql 9.6 (TODO)
+* postgresql 9.6
 
 Repository:
 
