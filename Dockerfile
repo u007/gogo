@@ -233,7 +233,8 @@ ENV POSTGRES_PASSWORD ""
 # custom config
 ADD /etc /etc
 RUN mkdir -p /run/postgresql/ && chown postgres:postgres /run/postgresql/
-RUN mkdir -p /var/log/redis && chmod 777 -R /var/log
+RUN mkdir -p /var/log/redis && mkdir -p /var/log/nginx && chmod a+rwx -R /var/log
+RUN mkdir -p /var/cache/nginx && chmod 777 -R /var/cache/nginx
 
 # ==========================================
 # finalize
@@ -244,10 +245,9 @@ EXPOSE 80 443 5432 6379
 #STOPSIGNAL SIGTERM
 
 
-CMD ["nginx", "-g", "daemon off;"]
 CMD ["redis-server", "/etc/redis/redis.conf"]
 #CMD ["su", "postgres", "postgres"]
-
+CMD ["nginx", "-g", "daemon off;"]
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # /data - redis
