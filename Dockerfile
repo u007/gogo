@@ -212,6 +212,7 @@ WORKDIR /data
 # ==========================================
 # postgresql
 # thanks to https://github.com/kiasaki/docker-alpine-postgres/blob/9.6/Dockerfile
+
 RUN echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
     apk update && \
     apk add curl "libpq@edge<9.7" "postgresql-client@edge<9.7" "postgresql@edge<9.7" "postgresql-contrib@edge<9.7" && \
@@ -221,29 +222,33 @@ RUN echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/reposito
     apk del curl && \
     rm -rf /var/cache/apk/*
 
+COPY docker-entrypoint.sh /
+RUN chmod a+x /docker-entrypoint.sh
+
+ENV LANG en_US.utf8
+ENV PGDATA /var/lib/postgresql/data
+ENV POSTGRES_PASSWORD ""
+
+# ==========================================
+# custom config
+ADD /etc /etc
+RUN mkdir -p /run/postgresql/ && chown postgres:postgres /run/postgresql/
+RUN mkdir -p /var/log/redis && chmod 777 -R /var/log
 
 # ==========================================
 # finalize
 
-#nginx
-EXPOSE 80
-EXPOSE 443
+#nginx, ssl, postgresql, redis
+EXPOSE 80 443 5432 6379
 
-#redis
-EXPOSE 6379
+#STOPSIGNAL SIGTERM
 
-#postgresql
-EXPOSE 5432
 
-STOPSIGNAL SIGTERM
-
-# ENTRYPOINT ["wkhtmltopdf"]
 CMD ["nginx", "-g", "daemon off;"]
-CMD ["redis-server"]
-CMD ["postgres"]
+CMD ["redis-server", "/etc/redis/redis.conf"]
+#CMD ["su", "postgres", "postgres"]
 
-ENV LANG en_US.utf8
-ENV PGDATA /var/lib/postgresql/data
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # /data - redis
 VOLUME ["/etc/nginx/conf.d", "/etc/nginx/certs", "/etc/nginx/dhparam", "/data", "/var/lib/postgresql/data"]
