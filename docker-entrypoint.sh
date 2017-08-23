@@ -1,7 +1,7 @@
 #!/bin/sh
 
-nginx
-redis-server /etc/redis/redis.conf
+exec nginx
+exec redis-server /etc/redis/redis.conf
 
 chown -R postgres "$PGDATA"
 
@@ -62,4 +62,5 @@ if [ -z "$(ls -A "$PGDATA")" ]; then
     { echo; echo "host all all 0.0.0.0/0 $authMethod"; } >> "$PGDATA"/pg_hba.conf
 fi
 
+exec gosu postgres postgres
 exec gosu postgres "$@"

@@ -25,8 +25,9 @@ RUN chmod a+x /bin/wkhtmltopdf
 RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log
 # ==========================================
 
-# thanks to: https://github.com/nginxinc/docker-nginx/blob/14aa3b1b80341099afbf90eb0a9b9061b7145f18/mainline/alpine/Dockerfile
-ENV NGINX_VERSION 1.13.3
+# thanks to: https://github.com/nginxinc/docker-nginx/blob/master/stable/alpine/Dockerfile
+ENV NGINX_VERSION 1.12.1
+
 RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& CONFIG="\
 		--prefix=/etc/nginx \
