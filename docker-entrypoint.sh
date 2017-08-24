@@ -2,7 +2,7 @@
 
 exec nginx
 exec redis-server /etc/redis/redis.conf
-
+exec /init &
 chown -R postgres "$PGDATA"
 
 if [ -z "$(ls -A "$PGDATA")" ]; then

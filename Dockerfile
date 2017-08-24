@@ -234,6 +234,66 @@ ENV PGDATA /var/lib/postgresql/data
 ENV POSTGRES_PASSWORD ""
 
 # ==========================================
+# minio
+# thanks to https://github.com/disaster37/alpine-minio/blob/master/Dockerfile
+# files: 
+# * root
+
+ENV CONFD_PREFIX_KEY="/minio" \
+    CONFD_BACKEND="env" \
+    CONFD_INTERVAL="60" \
+    CONFD_NODES="" \
+    S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
+    APP_HOME="/opt/minio" \
+    APP_VERSION="RELEASE.2017-03-16T21-50-32Z" \
+    SCHEDULER_VOLUME="/opt/scheduler" \
+    USER=minio \
+    GROUP=minio \
+    UID=10003 \
+    GID=10003
+
+# Install extra package
+RUN apk --update add fping curl bash &&\
+    rm -rf /var/cache/apk/*
+
+# Install confd
+ENV CONFD_VERSION="v0.13.7" \
+    CONFD_HOME="/opt/confd"
+RUN mkdir -p "${CONFD_HOME}/etc/conf.d" "${CONFD_HOME}/etc/templates" "${CONFD_HOME}/log" "${CONFD_HOME}/bin" &&\
+    curl -sL https://github.com/yunify/confd/releases/download/${CONFD_VERSION}/confd-alpine-amd64.tar.gz \
+    | tar -zx -C "${CONFD_HOME}/bin/"
+
+# Install s6-overlay
+RUN curl -sL https://github.com/just-containers/s6-overlay/releases/download/v1.19.1.1/s6-overlay-amd64.tar.gz \
+    | tar -zx -C /
+
+
+# Install Glibc for minio
+ENV GLIBC_VERSION="2.23-r1"
+RUN \
+    apk add --update -t deps wget ca-certificates &&\
+    cd /tmp &&\
+    wget https://github.com/andyshinn/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk &&\
+    wget https://github.com/andyshinn/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk &&\
+    apk add --allow-untrusted glibc-${GLIBC_VERSION}.apk glibc-bin-${GLIBC_VERSION}.apk &&\
+    /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib/ &&\
+    echo 'hosts: files mdns4_minimal [NOTFOUND=return] dns mdns4' >> /etc/nsswitch.conf &&\
+    apk del --purge deps &&\
+    rm /tmp/* /var/cache/apk/*
+
+# Install minio software
+RUN \
+    mkdir -p ${APP_HOME}/log /data ${APP_HOME}/bin ${APP_HOME}/conf && \
+    curl https://dl.minio.io/server/minio/release/linux-amd64/archive/minio.${APP_VERSION} -o ${APP_HOME}/bin/minio &&\
+    addgroup -g ${GID} ${GROUP} && \
+    adduser -g "${USER} user" -D -h ${APP_HOME} -G ${GROUP} -s /bin/sh -u ${UID} ${USER}
+
+
+ADD root /
+RUN chmod +x ${APP_HOME}/bin/* &&\
+    chown -R ${USER}:${GROUP} ${APP_HOME}
+
+# ==========================================
 # custom config
 ADD /etc /etc
 RUN mkdir -p /run/postgresql/ && chown postgres:postgres /run/postgresql/
@@ -244,11 +304,12 @@ RUN mkdir -p /var/run/redis && chmod 777 -R /var/run/redis
 RUN mkdir -p /var/lib/redis && chmod 777 -R /var/lib/redis
 
 ENV APP_ENDPOINT "http://127.0.0.1:3000"
+ENV PORT "3000"
 # ==========================================
 # finalize
 
-#nginx, ssl, postgresql, redis
-EXPOSE 80 443 5432 6379
+#nginx, ssl, postgresql, redis, minio
+EXPOSE 80 443 5432 6379 9000 3000
 WORKDIR /app
 
 #STOPSIGNAL SIGTERM
