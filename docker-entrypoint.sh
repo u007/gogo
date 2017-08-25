@@ -1,8 +1,12 @@
 #!/bin/sh
 
-exec nginx
-exec redis-server /etc/redis/redis.conf
+echo "=======starting init: minio ======="
 exec /init &
+echo "=======redis-server======="
+exec redis-server /etc/redis/redis.conf &
+echo "=======nginx======="
+exec nginx &
+
 chown -R postgres "$PGDATA"
 
 if [ -z "$(ls -A "$PGDATA")" ]; then
@@ -62,5 +66,10 @@ if [ -z "$(ls -A "$PGDATA")" ]; then
     { echo; echo "host all all 0.0.0.0/0 $authMethod"; } >> "$PGDATA"/pg_hba.conf
 fi
 
-exec gosu postgres postgres
-exec gosu postgres "$@"
+echo "=======starting postgres======="
+
+exec gosu postgres postgres &
+#exec gosu postgres "$@"
+#exec $@
+
+while true; do sleep 1000; done
