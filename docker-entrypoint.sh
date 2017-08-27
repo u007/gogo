@@ -4,6 +4,17 @@ echo "=======starting init: minio ======="
 exec /init &
 echo "=======redis-server======="
 exec redis-server /etc/redis/redis.conf &
+
+if [ -z "$(ls -A "$PGDATA")" ]; then
+  # nginx & pg ssl setup
+  openssl req  -nodes -new -x509  -keyout $PGDATA/server.key -out $PGDATA/server.crt -subj "/C=$COUNTRY/ST=/L=/O=$COMPANY/OU=DevOps/CN=$APP_DOMAIN/emailAddress=$SUPPORT_EMAIL"
+  sed -i "s|#\?ssl \?=.*|ssl = on|g" $PGDIR/postgresql.conf
+  
+  mkdir -p /etc/nginx/ssl
+  chmod 600 -R /etc/nginx/ssl
+  openssl req  -nodes -new -x509  -keyout /etc/nginx/ssl/server.key -out /etc/nginx/ssl/server.crt -subj "/C=$COUNTRY/ST=/L=/O=$COMPANY/OU=DevOps/CN=$APP_DOMAIN/emailAddress=$SUPPORT_EMAIL"
+fi
+
 echo "=======nginx======="
 exec nginx &
 

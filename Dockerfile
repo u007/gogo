@@ -295,6 +295,9 @@ RUN chmod +x ${APP_HOME}/bin/* &&\
 
 # ==========================================
 # custom config
+
+RUN apk add --update -t deps openssl
+
 ADD /etc /etc
 RUN mkdir -p /run/postgresql/ && chown postgres:postgres /run/postgresql/
 RUN mkdir -p /var/log/redis && chmod a+rwx -R /var/log/redis
@@ -305,6 +308,10 @@ RUN mkdir -p /var/lib/redis && chmod 777 -R /var/lib/redis
 
 ENV APP_ENDPOINT "http://127.0.0.1:3000"
 ENV PORT "3000"
+ENV APP_DOMAIN "example.com"
+ENV SUPPORT_EMAIL "info@example.com"
+ENV COMPANY "Example Inc."
+ENV COUNTRY "MY"
 # ==========================================
 # finalize
 
