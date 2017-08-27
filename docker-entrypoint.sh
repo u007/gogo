@@ -5,11 +5,8 @@ exec /init &
 echo "=======redis-server======="
 exec redis-server /etc/redis/redis.conf &
 
-if [ -z "$(ls -A "$PGDATA")" ]; then
-  # nginx & pg ssl setup
-  openssl req  -nodes -new -x509  -keyout $PGDATA/server.key -out $PGDATA/server.crt -subj "/C=$COUNTRY/ST=/L=/O=$COMPANY/OU=DevOps/CN=$APP_DOMAIN/emailAddress=$SUPPORT_EMAIL"
-  sed -i "s|#\?ssl \?=.*|ssl = on|g" $PGDIR/postgresql.conf
-  
+if [ -z "$(ls -A "/etc/nginx/ssl")" ]; then
+  # nginx setup
   mkdir -p /etc/nginx/ssl
   chmod 600 -R /etc/nginx/ssl
   openssl req  -nodes -new -x509  -keyout /etc/nginx/ssl/server.key -out /etc/nginx/ssl/server.crt -subj "/C=$COUNTRY/ST=/L=/O=$COMPANY/OU=DevOps/CN=$APP_DOMAIN/emailAddress=$SUPPORT_EMAIL"
@@ -75,6 +72,12 @@ if [ -z "$(ls -A "$PGDATA")" ]; then
     gosu postgres pg_ctl -D "$PGDATA" -m fast -w stop
 
     { echo; echo "host all all 0.0.0.0/0 $authMethod"; } >> "$PGDATA"/pg_hba.conf
+
+    # pg ssl setup
+    openssl req  -nodes -new -x509  -keyout $PGDATA/server.key -out $PGDATA/server.crt -subj "/C=$COUNTRY/ST=/L=/O=$COMPANY/OU=DevOps/CN=$APP_DOMAIN/emailAddress=$SUPPORT_EMAIL"
+    chown postgres:postgres $PGDATA/server.key $PGDATA/server.crt
+    chmod 0600 $PGDATA/server.key $PGDATA/server.crt
+    sed -i "s|#\?ssl \?=.*|ssl = on|g" $PGDATA/postgresql.conf
 fi
 
 echo "=======starting postgres======="
