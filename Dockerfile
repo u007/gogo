@@ -315,8 +315,16 @@ ENV COUNTRY "MY"
 # ==========================================
 # finalize
 
+RUN adduser -h /home/app -D -s /bin/bash -g app,sudo app
+#RUN usermod -a -G app,sudo app
+
+RUN mkdir -p /home/app/.ssh
+RUN mkdir -p /app
+RUN chown -R app:app /app
+RUN chown -R app:app /home/app
+
 #nginx, ssl, postgresql, redis, minio
-EXPOSE 80 443 5432 6379 9000 3000
+EXPOSE 80 443 5432 6379 9000 3000 22
 WORKDIR /app
 
 #STOPSIGNAL SIGTERM
