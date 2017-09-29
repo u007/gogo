@@ -288,10 +288,26 @@ RUN \
     addgroup -g ${GID} ${GROUP} && \
     adduser -g "${USER} user" -D -h ${APP_HOME} -G ${GROUP} -s /bin/sh -u ${UID} ${USER}
 
-
 ADD root /
 RUN chmod +x ${APP_HOME}/bin/* &&\
     chown -R ${USER}:${GROUP} ${APP_HOME}
+
+
+# ==========================================
+# ssh
+# thanks to https://hub.docker.com/r/gotechnies/alpine-ssh
+RUN apk --update add --no-cache openssh bash \
+  && sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config \
+  && rm -rf /var/cache/apk/*
+RUN sed -ie 's/#Port 22/Port 2022/g' /etc/ssh/sshd_config
+RUN sed -ri 's/#HostKey \/etc\/ssh\/ssh_host_key/HostKey \/etc\/ssh\/ssh_host_key/g' /etc/ssh/sshd_config
+RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_rsa_key/HostKey \/etc\/ssh\/ssh_host_rsa_key/g' /etc/ssh/sshd_config
+RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_dsa_key/HostKey \/etc\/ssh\/ssh_host_dsa_key/g' /etc/ssh/sshd_config
+RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_ecdsa_key/HostKey \/etc\/ssh\/ssh_host_ecdsa_key/g' /etc/ssh/sshd_config
+RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_ed25519_key/HostKey \/etc\/ssh\/ssh_host_ed25519_key/g' /etc/ssh/sshd_config
+RUN /usr/bin/ssh-keygen -A
+RUN ssh-keygen -t rsa -b 4096 -f  /etc/ssh/ssh_host_key
+
 
 # ==========================================
 # custom config
@@ -318,14 +334,16 @@ ENV COUNTRY "MY"
 RUN adduser -h /home/app -D -s /bin/bash -g app,sudo app
 #RUN usermod -a -G app,sudo app
 
+RUN mkdir -p /home/app/web
 RUN mkdir -p /home/app/.ssh
-RUN mkdir -p /app
-RUN chown -R app:app /app
+RUN touch /home/app/.ssh/authorized_keys
+RUN chmod 600 /home/app/.ssh/authorized_keys
+RUN chmod 700 /home/app/.ssh
 RUN chown -R app:app /home/app
 
 #nginx, ssl, postgresql, redis, minio
-EXPOSE 80 443 5432 6379 9000 3000 22
-WORKDIR /app
+EXPOSE 80 443 5432 6379 9000 3000 2022
+WORKDIR /home/app/web
 
 #STOPSIGNAL SIGTERM
 
@@ -337,6 +355,6 @@ WORKDIR /app
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # /data - redis
-VOLUME ["/etc/nginx/conf.d", "/etc/nginx/certs", "/etc/nginx/dhparam", "/data", "/var/lib/postgresql/data", "/app"]
+VOLUME ["/etc/nginx/conf.d", "/etc/nginx/certs", "/etc/nginx/dhparam", "/data", "/var/lib/postgresql/data", "/home/app"]
 
 
