@@ -8,6 +8,10 @@ if [ -z "$(ls -A "/etc/nginx/ssl")" ]; then
 fi
 
 echo "=======nginx======="
+
+export DOLLAR='$'
+envsubst < /etc/nginx/default.conf.template > /etc/nginx/conf.d/default.conf
+
 exec nginx &
 
 chown -R postgres "$PGDATA"
@@ -102,10 +106,8 @@ if [ "$SSH_KEY" ]; then
   fi
 fi
 
-exec gosu /usr/sbin/sshd -D &
+# exec gosu /usr/sbin/sshd -D &
+# mkdir -p /home/app/web/log
+# cd /home/app/web && exec gosu app bin/heroku > /home/app/web/log/out.log
 
-mkdir -p /home/app/web/log
-
-cd /home/app/web && exec gosu app bin/heroku > /home/app/web/log/out.log
-
-# while true; do sleep 1000; done
+while true; do sleep 1000; done

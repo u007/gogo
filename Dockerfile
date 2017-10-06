@@ -158,7 +158,7 @@ RUN GPG_KEYS=B0F4253373F8F6F510D42178520A9993A1C052F8 \
 	&& ln -sf /dev/stderr /var/log/nginx/error.log
 
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
-COPY nginx/nginx.vh.default.conf /etc/nginx/conf.d/default.conf
+COPY nginx/nginx.vh.default.conf /etc/nginx/default.conf.template
 
 # thanks to https://github.com/jwilder/nginx-proxy/blob/master/Dockerfile.alpine
 ENV DOCKER_HOST unix:///tmp/docker.sock
