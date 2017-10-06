@@ -9,7 +9,10 @@ fi
 
 echo "=======nginx======="
 
-export DOLLAR='%'
+#fix $uri used in template
+export DOLLAR='$'
+export uri="\$uri"
+
 envsubst < /etc/nginx/default.conf.template > /etc/nginx/conf.d/default.conf
 
 exec nginx &
