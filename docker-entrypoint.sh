@@ -1,10 +1,5 @@
 #!/bin/sh
 
-echo "=======starting init: minio ======="
-exec /init &
-echo "=======redis-server======="
-exec redis-server /etc/redis/redis.conf &
-
 if [ -z "$(ls -A "/etc/nginx/ssl")" ]; then
   # nginx setup
   mkdir -p /etc/nginx/ssl
@@ -111,6 +106,6 @@ exec gosu /usr/sbin/sshd -D &
 
 mkdir -p /home/app/web/log
 
-exec cd /home/app/web && gosu app bin/heroku > /home/app/web/log/out.log
+cd /home/app/web && exec gosu app bin/heroku > /home/app/web/log/out.log
 
-while true; do sleep 1000; done
+# while true; do sleep 1000; done
