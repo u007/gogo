@@ -9,7 +9,7 @@ fi
 
 echo "=======nginx======="
 
-export DOLLAR='$'
+export DOLLAR='%'
 envsubst < /etc/nginx/default.conf.template > /etc/nginx/conf.d/default.conf
 
 exec nginx &
