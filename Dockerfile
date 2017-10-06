@@ -164,56 +164,6 @@ COPY nginx/nginx.vh.default.conf /etc/nginx/conf.d/default.conf
 ENV DOCKER_HOST unix:///tmp/docker.sock
 
 # ==========================================
-# redis
-# thanks to https://github.com/docker-library/redis/blob/ebde981d2737c5a618481f766d253afff13aeb9f/3.2/alpine/Dockerfile
-
-RUN addgroup -S redis && adduser -S -G redis redis
-
-# grab su-exec for easy step-down from root
-RUN apk add --no-cache 'su-exec>=0.2'
-
-ENV REDIS_VERSION 3.2.10
-ENV REDIS_DOWNLOAD_URL http://download.redis.io/releases/redis-3.2.10.tar.gz
-ENV REDIS_DOWNLOAD_SHA 411c604a716104f7f5a326abfad32de9cea10f15f987bec45cf86f315e9e63a0
-
-# for redis-sentinel see: http://redis.io/topics/sentinel
-RUN set -ex; \
-	\
-	apk add --no-cache --virtual .build-deps \
-		coreutils \
-		gcc \
-		linux-headers \
-		make \
-		musl-dev \
-	; \
-	\
-	wget -O redis.tar.gz "$REDIS_DOWNLOAD_URL";\
-	echo "$REDIS_DOWNLOAD_SHA *redis.tar.gz" | sha256sum -c -; \
-	mkdir -p /usr/src/redis; \
-	tar -xzf redis.tar.gz -C /usr/src/redis --strip-components=1; \
-	rm redis.tar.gz; \
-	\
-# disable Redis protected mode [1] as it is unnecessary in context of Docker
-# (ports are not automatically exposed when running inside Docker, but rather explicitly by specifying -p / -P)
-# [1]: https://github.com/antirez/redis/commit/edd4d555df57dc84265fdfb4ef59a4678832f6da
-	grep -q '^#define CONFIG_DEFAULT_PROTECTED_MODE 1$' /usr/src/redis/src/server.h; \
-	sed -ri 's!^(#define CONFIG_DEFAULT_PROTECTED_MODE) 1$!\1 0!' /usr/src/redis/src/server.h; \
-	grep -q '^#define CONFIG_DEFAULT_PROTECTED_MODE 0$' /usr/src/redis/src/server.h; \
-# for future reference, we modify this directly in the source instead of just supplying a default configuration flag because apparently "if you specify any argument to redis-server, [it assumes] you are going to specify everything"
-# see also https://github.com/docker-library/redis/issues/4#issuecomment-50780840
-# (more exactly, this makes sure the default behavior of "save on SIGTERM" stays functional by default)
-	\
-	make -C /usr/src/redis -j "$(nproc)"; \
-	make -C /usr/src/redis install; \
-	\
-	rm -r /usr/src/redis; \
-	\
-	apk del .build-deps
-
-RUN mkdir /data && chown redis:redis /data
-VOLUME /data
-
-# ==========================================
 # postgresql
 # thanks to https://github.com/kiasaki/docker-alpine-postgres/blob/9.6/Dockerfile
 
@@ -232,65 +182,6 @@ RUN chmod a+x /docker-entrypoint.sh
 ENV LANG en_US.utf8
 ENV PGDATA /var/lib/postgresql/data
 ENV POSTGRES_PASSWORD ""
-
-# ==========================================
-# minio
-# thanks to https://github.com/disaster37/alpine-minio/blob/master/Dockerfile
-# files: 
-# * root
-
-ENV CONFD_PREFIX_KEY="/minio" \
-    CONFD_BACKEND="env" \
-    CONFD_INTERVAL="60" \
-    CONFD_NODES="" \
-    S6_BEHAVIOUR_IF_STAGE2_FAILS=2 \
-    APP_HOME="/opt/minio" \
-    APP_VERSION="RELEASE.2017-03-16T21-50-32Z" \
-    SCHEDULER_VOLUME="/opt/scheduler" \
-    USER=minio \
-    GROUP=minio \
-    UID=10003 \
-    GID=10003
-
-# Install extra package
-RUN apk --update add fping curl bash &&\
-    rm -rf /var/cache/apk/*
-
-# Install confd
-ENV CONFD_VERSION="v0.13.7" \
-    CONFD_HOME="/opt/confd"
-RUN mkdir -p "${CONFD_HOME}/etc/conf.d" "${CONFD_HOME}/etc/templates" "${CONFD_HOME}/log" "${CONFD_HOME}/bin" &&\
-    curl -sL https://github.com/yunify/confd/releases/download/${CONFD_VERSION}/confd-alpine-amd64.tar.gz \
-    | tar -zx -C "${CONFD_HOME}/bin/"
-
-# Install s6-overlay
-RUN curl -sL https://github.com/just-containers/s6-overlay/releases/download/v1.19.1.1/s6-overlay-amd64.tar.gz \
-    | tar -zx -C /
-
-
-# Install Glibc for minio
-ENV GLIBC_VERSION="2.23-r1"
-RUN \
-    apk add --update -t deps wget ca-certificates &&\
-    cd /tmp &&\
-    wget https://github.com/andyshinn/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-${GLIBC_VERSION}.apk &&\
-    wget https://github.com/andyshinn/alpine-pkg-glibc/releases/download/${GLIBC_VERSION}/glibc-bin-${GLIBC_VERSION}.apk &&\
-    apk add --allow-untrusted glibc-${GLIBC_VERSION}.apk glibc-bin-${GLIBC_VERSION}.apk &&\
-    /usr/glibc-compat/sbin/ldconfig /lib /usr/glibc-compat/lib/ &&\
-    echo 'hosts: files mdns4_minimal [NOTFOUND=return] dns mdns4' >> /etc/nsswitch.conf &&\
-    apk del --purge deps &&\
-    rm /tmp/* /var/cache/apk/*
-
-# Install minio software
-RUN \
-    mkdir -p ${APP_HOME}/log /data ${APP_HOME}/bin ${APP_HOME}/conf && \
-    curl https://dl.minio.io/server/minio/release/linux-amd64/archive/minio.${APP_VERSION} -o ${APP_HOME}/bin/minio &&\
-    addgroup -g ${GID} ${GROUP} && \
-    adduser -g "${USER} user" -D -h ${APP_HOME} -G ${GROUP} -s /bin/sh -u ${UID} ${USER}
-
-ADD root /
-RUN chmod +x ${APP_HOME}/bin/* &&\
-    chown -R ${USER}:${GROUP} ${APP_HOME}
 
 
 # ==========================================
@@ -316,11 +207,8 @@ RUN apk add --update -t deps openssl
 
 ADD /etc /etc
 RUN mkdir -p /run/postgresql/ && chown postgres:postgres /run/postgresql/
-RUN mkdir -p /var/log/redis && chmod a+rwx -R /var/log/redis
 RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log/nginx
 RUN mkdir -p /var/cache/nginx && chmod 777 -R /var/cache/nginx
-RUN mkdir -p /var/run/redis && chmod 777 -R /var/run/redis
-RUN mkdir -p /var/lib/redis && chmod 777 -R /var/lib/redis
 
 ENV APP_ENDPOINT "http://127.0.0.1:3000"
 ENV PORT "3000"
@@ -341,20 +229,17 @@ RUN chmod 600 /home/app/.ssh/authorized_keys
 RUN chmod 700 /home/app/.ssh
 RUN chown -R app:app /home/app
 
-#nginx, ssl, postgresql, redis, minio
-EXPOSE 80 443 5432 6379 9000 3000 2022
+#nginx, ssl, postgresql
+EXPOSE 80 443 5432 3000 2022
 WORKDIR /home/app/web
 
 #STOPSIGNAL SIGTERM
 
-#CMD redis-server /etc/redis/redis.conf && nginx
-#CMD ["redis-server", "/etc/redis/redis.conf"]
 #CMD ["su", "postgres", "postgres"]
 #CMD ["nginx"]
 #CMD ["nginx", "-g", "daemon off;"]
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-# /data - redis
-VOLUME ["/etc/nginx/conf.d", "/etc/nginx/certs", "/etc/nginx/dhparam", "/data", "/var/lib/postgresql/data", "/home/app"]
+VOLUME ["/etc/nginx/conf.d", "/etc/nginx/certs", "/etc/nginx/dhparam", "/var/lib/postgresql/data", "/home/app"]
 
 

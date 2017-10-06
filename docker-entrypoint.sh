@@ -109,5 +109,8 @@ fi
 
 exec gosu /usr/sbin/sshd -D &
 
+mkdir -p /home/app/web/log
+
+exec cd /home/app/web && gosu app bin/heroku > /home/app/web/log/out.log
 
 while true; do sleep 1000; done
