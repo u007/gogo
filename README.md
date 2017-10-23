@@ -8,3 +8,8 @@ Comes with:
 Repository:
 
 * https://hub.docker.com/r/mercstudio/gogo/
+
+Deployment:
+
+* docker build -t nurtureai/nginx-ssl .
+* docker push nurtureai/nginx-ssl
