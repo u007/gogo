@@ -1,5 +1,6 @@
 #!/bin/sh
 
+echo "=======nginx======="
 if [ -z "$(ls -A "/etc/nginx/ssl")" ]; then
   # nginx setup
   mkdir -p /etc/nginx/ssl
@@ -7,13 +8,10 @@ if [ -z "$(ls -A "/etc/nginx/ssl")" ]; then
   openssl req  -nodes -new -x509  -keyout /etc/nginx/ssl/server.key -out /etc/nginx/ssl/server.crt -subj "/C=$COUNTRY/ST=/L=/O=$COMPANY/OU=DevOps/CN=$APP_DOMAIN/emailAddress=$SUPPORT_EMAIL"
 fi
 
-echo "=======nginx======="
+if [ -z "$(ls -A "/etc/nginx/conf.d/default.conf")" ]; then
 
-#fix $uri used in template
-export DOLLAR='$'
-export uri="\$uri"
-
-envsubst < /etc/nginx/default.conf.template > /etc/nginx/conf.d/default.conf
+  sed "s/\${host}/$APPHost/" /etc/nginx/default.conf.template > /etc/nginx/conf.d/default.conf
+fi
 
 exec nginx &
 #exec $@

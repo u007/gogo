@@ -194,7 +194,6 @@ RUN echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/reposito
 
 RUN apk add --update -t deps openssl
 
-ADD /etc /etc
 RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log/nginx
 RUN mkdir -p /var/cache/nginx && chmod 777 -R /var/cache/nginx
 
@@ -217,17 +216,14 @@ RUN chmod 600 /home/app/.ssh/authorized_keys
 RUN chmod 700 /home/app/.ssh
 RUN chown -R app:app /home/app
 
-#nginx, ssl, postgresql
+#nginx, ssl
 EXPOSE 80 443 3000 2022
 WORKDIR /home/app/web
 
 #STOPSIGNAL SIGTERM
 
-#CMD ["su", "postgres", "postgres"]
-#CMD ["nginx"]
-#CMD ["nginx", "-g", "daemon off;"]
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-VOLUME ["/etc/nginx/conf.d", "/etc/nginx/certs", "/etc/nginx/dhparam","/home/app"]
+VOLUME ["/etc/nginx/conf.d", "/etc/nginx/ssl", "/home/app"]
 
 
