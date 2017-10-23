@@ -8,10 +8,9 @@ if [ -z "$(ls -A "/etc/nginx/ssl")" ]; then
   openssl req  -nodes -new -x509  -keyout /etc/nginx/ssl/server.key -out /etc/nginx/ssl/server.crt -subj "/C=$COUNTRY/ST=/L=/O=$COMPANY/OU=DevOps/CN=$APP_DOMAIN/emailAddress=$SUPPORT_EMAIL"
 fi
 
-if [ -z "$(ls -A "/etc/nginx/conf.d/default.conf")" ]; then
-
-  sed "s/\${host}/$APPHost/" /etc/nginx/default.conf.template > /etc/nginx/conf.d/default.conf
-fi
+# always override
+export DOCKERMAIN_HOST=$(route -n | awk '/UG[ \t]/{print $2}')
+sed "s/\${host}/$APPHost/" /etc/nginx/default.conf.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" > /etc/nginx/conf.d/default.conf
 
 exec nginx &
 #exec $@
