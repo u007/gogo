@@ -171,30 +171,29 @@ ENV LANG en_US.utf8
 # ==========================================
 # ssh
 # thanks to https://hub.docker.com/r/gotechnies/alpine-ssh
-RUN apk --update add --no-cache openssh bash curl \
-  && sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config \
-  && rm -rf /var/cache/apk/*
-RUN sed -ie 's/#Port 22/Port 2022/g' /etc/ssh/sshd_config
-RUN sed -ri 's/#HostKey \/etc\/ssh\/ssh_host_key/HostKey \/etc\/ssh\/ssh_host_key/g' /etc/ssh/sshd_config
-RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_rsa_key/HostKey \/etc\/ssh\/ssh_host_rsa_key/g' /etc/ssh/sshd_config
-RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_dsa_key/HostKey \/etc\/ssh\/ssh_host_dsa_key/g' /etc/ssh/sshd_config
-RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_ecdsa_key/HostKey \/etc\/ssh\/ssh_host_ecdsa_key/g' /etc/ssh/sshd_config
-RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_ed25519_key/HostKey \/etc\/ssh\/ssh_host_ed25519_key/g' /etc/ssh/sshd_config
-RUN /usr/bin/ssh-keygen -A
-RUN ssh-keygen -t rsa -b 4096 -f  /etc/ssh/ssh_host_key
+#RUN apk --update add --no-cache openssh bash curl \
+#  && sed -i s/#PermitRootLogin.*/PermitRootLogin\ yes/ /etc/ssh/sshd_config \
+#  && rm -rf /var/cache/apk/*
+#RUN sed -ie 's/#Port 22/Port 2022/g' /etc/ssh/sshd_config
+#RUN sed -ri 's/#HostKey \/etc\/ssh\/ssh_host_key/HostKey \/etc\/ssh\/ssh_host_key/g' /etc/ssh/sshd_config
+#RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_rsa_key/HostKey \/etc\/ssh\/ssh_host_rsa_key/g' /etc/ssh/sshd_config
+#RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_dsa_key/HostKey \/etc\/ssh\/ssh_host_dsa_key/g' /etc/ssh/sshd_config
+#RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_ecdsa_key/HostKey \/etc\/ssh\/ssh_host_ecdsa_key/g' /etc/ssh/sshd_config
+#RUN sed -ir 's/#HostKey \/etc\/ssh\/ssh_host_ed25519_key/HostKey \/etc\/ssh\/ssh_host_ed25519_key/g' /etc/ssh/sshd_config
+#RUN /usr/bin/ssh-keygen -A
+#RUN ssh-keygen -t rsa -b 4096 -f  /etc/ssh/ssh_host_key
 
-RUN echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
-    apk update && \
-    curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/1.2/gosu-amd64" && \
-    chmod +x /usr/local/bin/gosu && \
-    rm -rf /var/cache/apk/*
+#RUN echo "@edge http://nl.alpinelinux.org/alpine/edge/main" >> /etc/apk/repositories && \
+#    apk update && \
+#    curl -o /usr/local/bin/gosu -sSL "https://github.com/tianon/gosu/releases/download/1.2/gosu-amd64" && \
+#    chmod +x /usr/local/bin/gosu && \
+#    rm -rf /var/cache/apk/*
 
 # ==========================================
 # custom config
 
 RUN apk add --update -t deps openssl
 
-ADD /etc /etc
 RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log/nginx
 RUN mkdir -p /var/cache/nginx && chmod 777 -R /var/cache/nginx
 
@@ -217,17 +216,14 @@ RUN chmod 600 /home/app/.ssh/authorized_keys
 RUN chmod 700 /home/app/.ssh
 RUN chown -R app:app /home/app
 
-#nginx, ssl, postgresql
+#nginx, ssl
 EXPOSE 80 443 3000 2022
 WORKDIR /home/app/web
 
 #STOPSIGNAL SIGTERM
 
-#CMD ["su", "postgres", "postgres"]
-#CMD ["nginx"]
-#CMD ["nginx", "-g", "daemon off;"]
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-VOLUME ["/etc/nginx/conf.d", "/etc/nginx/certs", "/etc/nginx/dhparam","/home/app"]
+VOLUME ["/etc/nginx/conf.d", "/etc/nginx/ssl", "/home/app"]
 
 
