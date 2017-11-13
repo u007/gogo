@@ -10,7 +10,7 @@ fi
 
 # always override
 export DOCKERMAIN_HOST=$(route -n | awk '/UG[ \t]/{print $2}')
-sed "s/\${host}/$APPHost/" /etc/nginx/default.conf.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" > /etc/nginx/conf.d/default.conf
+sed "s/\${host}/$APPHost/" /etc/nginx/default.conf.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" | sed "s/\${APP_DOMAIN}/$APP_DOMAIN/" > /etc/nginx/conf.d/default.conf
 
 exec nginx &
 #exec $@
