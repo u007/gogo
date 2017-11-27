@@ -1,0 +1,7 @@
+#!/bin/sh
+
+echo "acme-client: setup $APP_DOMAIN"
+
+acme-client -a https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf -Nnmv $APP_DOMAIN && renew=1
+
+[ "$renew" = 1 ] && rc-service nginx reload
