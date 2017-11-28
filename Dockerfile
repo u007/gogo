@@ -2,7 +2,7 @@ FROM nginx:1-alpine
 MAINTAINER James <c00lways@gmail.com>
 
 RUN apk update \
-  &&  apk add ca-certificates wget \
+  &&  apk add -t deps ca-certificates openssl acme-client curl\
   && update-ca-certificates
 
 # ==========================================
@@ -30,9 +30,8 @@ RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/nginx.vh.default-pre.conf /etc/nginx/default.conf-pre.template
 COPY nginx/nginx.vh.default.conf /etc/nginx/default.conf.template
-COPY nginx/nginx.acme.conf /etc/nginx/conf.d/
-COPY nginx/acme-client /etc/periodic/weekly/acme-client
-RUN chmod a+x /etc/periodic/weekly/acme-client
+COPY nginx/acme-client.sh /etc/periodic/weekly/acme-client.sh
+RUN chmod a+x /etc/periodic/weekly/acme-client.sh
 
 # thanks to https://github.com/jwilder/nginx-proxy/blob/master/Dockerfile.alpine
 ENV DOCKER_HOST unix:///tmp/docker.sock
@@ -66,8 +65,6 @@ ENV LANG en_US.utf8
 # ==========================================
 # custom config
 
-RUN apk add --update -t deps openssl acme-client
-
 RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log/nginx
 RUN mkdir -p /var/cache/nginx && chmod 777 -R /var/cache/nginx
 
@@ -98,6 +95,6 @@ WORKDIR /home/app/web
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
-VOLUME ["/etc/nginx/conf.d", "/etc/nginx/ssl", "/home/app"]
+VOLUME ["/etc/nginx/conf.d", "/etc/ssl", "/home/app"]
 
 

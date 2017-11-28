@@ -10,7 +10,7 @@ if [ -z "$(ls -A "/etc/ssl/acme/$APP_DOMAIN")" ]; then
 
   mkdir -p /etc/ssl/acme/
   chmod 600 -R /etc/ssl/acme/
-  exec /etc/periodic/weekly/acme-client
+  exec /etc/periodic/weekly/acme-client.sh
 
   echo "ssl setup done..."
   rm -f /etc/nginx/conf.d/default.conf
