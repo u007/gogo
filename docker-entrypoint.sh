@@ -3,18 +3,23 @@
 echo "=======nginx======="
 if [ -z "$(ls -A "/etc/ssl/acme/$APP_DOMAIN")" ]; then
   # nginx setup
-  echo "setting up /etc/ssl/acme/$APP_DOMAIN"
-  sed "s/\${host}/$APPHost/" /etc/nginx/default.conf-pre.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" | sed "s/\${APP_DOMAIN}/$APP_DOMAIN/" > /etc/nginx/conf.d/default.conf
 
-  exec nginx &
+  # generate ssl
+  if [ "$GENERATE_SSL" -eq "1" ]; then
+    echo "setting up /etc/ssl/acme/$APP_DOMAIN"
+    sed "s/\${host}/$APPHost/" /etc/nginx/default.conf-pre.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" | sed "s/\${APP_DOMAIN}/$APP_DOMAIN/" > /etc/nginx/conf.d/default.conf
 
-  mkdir -p /etc/ssl/acme/
-  chmod 600 -R /etc/ssl/acme/
-  exec /etc/periodic/weekly/acme-client.sh
+    exec nginx &
 
-  echo "ssl setup done..."
-  rm -f /etc/nginx/conf.d/default.conf
-  # openssl req  -nodes -new -x509  -keyout /etc/nginx/ssl/server.key -out /etc/nginx/ssl/server.crt -subj "/C=$COUNTRY/ST=/L=/O=$COMPANY/OU=DevOps/CN=$APP_DOMAIN/emailAddress=$SUPPORT_EMAIL"
+    mkdir -p /etc/ssl/acme/
+    chmod 600 -R /etc/ssl/acme/
+    exec /etc/periodic/weekly/acme-client.sh
+
+    echo "ssl setup done..."
+    rm -f /etc/nginx/conf.d/default.conf
+    # openssl req  -nodes -new -x509  -keyout /etc/nginx/ssl/server.key -out /etc/nginx/ssl/server.crt -subj "/C=$COUNTRY/ST=/L=/O=$COMPANY/OU=DevOps/CN=$APP_DOMAIN/emailAddress=$SUPPORT_EMAIL"
+  fi
+
 else
   echo "exists: "/etc/ssl/acme/$APP_DOMAIN""
 fi
@@ -23,7 +28,11 @@ ls -lath /etc/ssl/acme/$APP_DOMAIN
 
 # always override
 export DOCKERMAIN_HOST=$(route -n | awk '/UG[ \t]/{print $2}')
-sed "s/\${host}/$APPHost/" /etc/nginx/default.conf.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" | sed "s/\${APP_DOMAIN}/$APP_DOMAIN/" > /etc/nginx/conf.d/default.conf
+if [ "$GENERATE_SSL" -eq "1" ]; then
+  sed "s/\${host}/$APPHost/" /etc/nginx/control-default.conf.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" | sed "s/\${APP_DOMAIN}/$APP_DOMAIN/" > /etc/nginx/conf.d/default.conf
+else
+  sed "s/\${host}/$APPHost/" /etc/nginx/default.conf.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" | sed "s/\${APP_DOMAIN}/$APP_DOMAIN/" | sed "s/\${DOCKER_CONTROL_HOST}/$DOCKER_CONTROL_HOST" > /etc/nginx/conf.d/default.conf
+fi
 
 exec nginx &
 #exec $@

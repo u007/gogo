@@ -30,6 +30,7 @@ RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/nginx.vh.default-pre.conf /etc/nginx/default.conf-pre.template
 COPY nginx/nginx.vh.default.conf /etc/nginx/default.conf.template
+COPY nginx/nginx.vh.control-default.conf /etc/nginx/control-default.conf.template
 COPY nginx/acme-client.sh /etc/periodic/weekly/acme-client.sh
 RUN chmod a+x /etc/periodic/weekly/acme-client.sh
 
@@ -71,9 +72,11 @@ RUN mkdir -p /var/cache/nginx && chmod 777 -R /var/cache/nginx
 ENV APP_ENDPOINT "http://127.0.0.1:3000"
 ENV PORT "3000"
 ENV APP_DOMAIN "example.com"
+ENV DOCKER_CONTROL_HOST ""
 ENV SUPPORT_EMAIL "info@example.com"
 ENV COMPANY "Example Inc."
 ENV COUNTRY "MY"
+ENV GENERATE_SSL "0"
 # ==========================================
 # finalize
 
