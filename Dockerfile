@@ -1,9 +1,15 @@
 FROM nginx:1-alpine
 MAINTAINER James <c00lways@gmail.com>
 
+ENV ACMETOOL_VERSION=0.0.61
+
 RUN apk update \
-  &&  apk add -t deps ca-certificates openssl acme-client curl\
-  && update-ca-certificates
+  &&  apk add ca-certificates openssl curl tar gzip
+
+RUN cd /usr/local/bin && \
+  curl -L https://github.com/hlandau/acme/releases/download/v$ACMETOOL_VERSION/acmetool-v$ACMETOOL_VERSION-linux_amd64.tar.gz | tar xz --strip-components=2
+
+RUN update-ca-certificates
 
 # ==========================================
 # wkhtmltopdf
@@ -32,6 +38,8 @@ COPY nginx/nginx.vh.default-pre.conf /etc/nginx/default.conf-pre.template
 COPY nginx/nginx.vh.default.conf /etc/nginx/default.conf.template
 COPY nginx/nginx.vh.control-default.conf /etc/nginx/control-default.conf.template
 COPY nginx/acme-client.sh /etc/periodic/weekly/acme-client.sh
+COPY nginx/acme-config.yml /etc/nginx/acme-config.template
+
 RUN chmod a+x /etc/periodic/weekly/acme-client.sh
 
 # thanks to https://github.com/jwilder/nginx-proxy/blob/master/Dockerfile.alpine
