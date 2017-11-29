@@ -1,9 +1,8 @@
 #!/bin/sh
 
-if [ $# -ne 0 ]; then
-  exec $@
-fi
-
+# if [ $# -ne 0 ]; then
+#   exec $@
+# fi
 echo "=======nginx======="
 if [ -z "$(ls -A "/etc/ssl/acme/$APP_DOMAIN")" ]; then
   # nginx setup
@@ -45,12 +44,16 @@ export DOCKERMAIN_HOST=$(route -n | awk '/UG[ \t]/{print $2}')
 if [ "$GENERATE_SSL" -eq "1" ]; then
   sed "s/\${host}/$APPHost/" /etc/nginx/control-default.conf.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" | sed "s/\${APP_DOMAIN}/$APP_DOMAIN/" > /etc/nginx/conf.d/default.conf
 else
-  sed "s/\${host}/$APPHost/" /etc/nginx/default.conf.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" | sed "s/\${APP_DOMAIN}/$APP_DOMAIN/" | sed "s/\${DOCKER_CONTROL_HOST}/$DOCKER_CONTROL_HOST" > /etc/nginx/conf.d/default.conf
+  sed "s/\${host}/$APPHost/" /etc/nginx/default.conf.template | sed "s/\${dockerhost}/$DOCKERMAIN_HOST/" | sed "s/\${APP_DOMAIN}/$APP_DOMAIN/" | sed "s/\${DOCKER_CONTROL_HOST}/$DOCKER_CONTROL_HOST/" > /etc/nginx/conf.d/default.conf
 fi
+
+cat /etc/nginx/conf.d/default.conf
 
 if [ $# -eq 0 ]; then
   echo "starting nginx"
-  exec nginx
+  exec nginx -g 'daemon off;'
+else
+  exec $@
   # while true; do sleep 1000; done
 fi
 #exec $@
