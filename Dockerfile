@@ -25,11 +25,6 @@ RUN update-ca-certificates
 # COPY wkhtmltopdf /bin
 # RUN chmod a+x /bin/wkhtmltopdf
 
-# ==========================================
-# nginx
-# pre nginx
-RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log
-# ==========================================
 
 # thanks to: https://github.com/nginxinc/docker-nginx/blob/master/stable/alpine/Dockerfile
 
@@ -39,16 +34,9 @@ COPY nginx/nginx.vh.default.conf /etc/nginx/default.conf.template
 COPY nginx/nginx.vh.control-default.conf /etc/nginx/control-default.conf.template
 COPY nginx/acme-client.sh /etc/periodic/weekly/acme-client.sh
 COPY nginx/acme-config.yml /etc/nginx/acme-config.template
-
-RUN chmod a+x /etc/periodic/weekly/acme-client.sh
-
-# thanks to https://github.com/jwilder/nginx-proxy/blob/master/Dockerfile.alpine
-ENV DOCKER_HOST unix:///tmp/docker.sock
-
 COPY docker-entrypoint.sh /
-RUN chmod a+x /docker-entrypoint.sh
+# thanks to https://github.com/jwilder/nginx-proxy/blob/master/Dockerfile.alpine
 
-ENV LANG en_US.utf8
 
 # ==========================================
 # ssh
@@ -74,8 +62,11 @@ ENV LANG en_US.utf8
 # ==========================================
 # custom config
 
-RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log/nginx
-RUN mkdir -p /var/cache/nginx && chmod 777 -R /var/cache/nginx
+RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log/nginx && \
+	mkdir -p /var/cache/nginx && chmod 777 -R /var/cache/nginx && \
+	mkdir -p /var/log/nginx && chmod a+rwx -R /var/log && \
+	chmod a+x /etc/periodic/weekly/acme-client.sh && \
+	chmod a+x /docker-entrypoint.sh
 
 ENV APP_ENDPOINT "http://127.0.0.1:3000"
 ENV PORT "3000"
@@ -85,18 +76,19 @@ ENV SUPPORT_EMAIL "info@example.com"
 ENV COMPANY "Example Inc."
 ENV COUNTRY "MY"
 ENV GENERATE_SSL "0"
+ENV DOCKER_HOST unix:///tmp/docker.sock
+ENV LANG en_US.utf8
+
 # ==========================================
 # finalize
 
-RUN adduser -h /home/app -D -s /bin/bash -g app,sudo app
-#RUN usermod -a -G app,sudo app
-
-RUN mkdir -p /home/app/web
-RUN mkdir -p /home/app/.ssh
-RUN touch /home/app/.ssh/authorized_keys
-RUN chmod 600 /home/app/.ssh/authorized_keys
-RUN chmod 700 /home/app/.ssh
-RUN chown -R app:app /home/app
+RUN adduser -h /home/app -D -s /bin/bash -g app,sudo app && \
+	mkdir -p /home/app/web && \
+	mkdir -p /home/app/.ssh && \
+	touch /home/app/.ssh/authorized_keys && \
+	chmod 600 /home/app/.ssh/authorized_keys && \
+	chmod 700 /home/app/.ssh && \
+	chown -R app:app /home/app
 
 #nginx, ssl
 EXPOSE 80 443 3000 2022
