@@ -62,6 +62,7 @@ COPY docker-entrypoint.sh /
 # ==========================================
 # custom config
 
+
 RUN mkdir -p /var/log/nginx && chmod a+rwx -R /var/log/nginx && \
 	mkdir -p /var/cache/nginx && chmod 777 -R /var/cache/nginx && \
 	mkdir -p /var/log/nginx && chmod a+rwx -R /var/log && \
@@ -82,6 +83,11 @@ ENV LANG en_US.utf8
 # ==========================================
 # finalize
 
+RUN apk add shadow
+
+RUN adduser dummy1 -D
+RUN addgroup dummy2
+RUN addgroup dummy3
 RUN adduser -h /home/app -D -s /bin/bash -g app,sudo app && \
 	mkdir -p /home/app/web && \
 	mkdir -p /home/app/.ssh && \
@@ -89,6 +95,7 @@ RUN adduser -h /home/app -D -s /bin/bash -g app,sudo app && \
 	chmod 600 /home/app/.ssh/authorized_keys && \
 	chmod 700 /home/app/.ssh && \
 	chown -R app:app /home/app
+RUN usermod -aG app nginx
 
 #nginx, ssl
 EXPOSE 80 443 3000 2022
