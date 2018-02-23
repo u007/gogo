@@ -98,7 +98,7 @@ RUN adduser -h /home/app -D -s /bin/bash -g app,sudo app && \
 RUN usermod -aG app nginx
 
 #nginx, ssl
-EXPOSE 80 443 3000 2022
+EXPOSE 80 443
 WORKDIR /home/app/web
 
 #STOPSIGNAL SIGTERM
